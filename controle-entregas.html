@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meu Caixa — finanças e entregas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F3F4F1; --card:#FFFFFF; --ink:#1A2230; --muted:#5F6B7A; --line:#DCDFD8;
+  --in:#1B7F55; --out:#C2402C; --road:#F2B705; --road-ink:#2A2100; --soft:#ECEEE8;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161D; --card:#1B212B; --ink:#EDEFF2; --muted:#98A3B3; --line:#2B3340;
+    --in:#4CC18D; --out:#F0806D; --road:#F2B705; --road-ink:#2A2100; --soft:#232B37;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161D; --card:#1B212B; --ink:#EDEFF2; --muted:#98A3B3; --line:#2B3340;
+  --in:#4CC18D; --out:#F0806D; --road:#F2B705; --road-ink:#2A2100; --soft:#232B37;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Barlow',system-ui,sans-serif;font-size:16px;line-height:1.45}
+.wrap{max-width:640px;margin:0 auto;padding:16px 16px 96px}
+h1,h2,h3{font-family:'Barlow Semi Condensed','Barlow',sans-serif;margin:0;letter-spacing:.01em}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font-size:26px;font-weight:700}
+h2{font-size:20px;font-weight:600;margin:18px 0 8px}
+.sel{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.saldo{border-left:8px solid var(--road);border-radius:6px 12px 12px 6px}
+.saldo .lbl{color:var(--muted);font-size:14px}
+.saldo .val{font-family:'Barlow Semi Condensed',sans-serif;font-weight:700;font-size:44px;line-height:1.05}
+.pos{color:var(--in)} .neg{color:var(--out)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kv{background:var(--soft);border-radius:8px;padding:10px}
+.kv .k{font-size:13px;color:var(--muted)}
+.kv .v{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:22px}
+label{display:block;font-size:14px;color:var(--muted);margin-bottom:3px}
+input,select,textarea{font:inherit;width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink)}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--road);outline-offset:1px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.row.one{grid-template-columns:1fr}
+.btn{font:inherit;font-weight:600;border:0;border-radius:10px;padding:12px 16px;background:var(--road);color:var(--road-ink);cursor:pointer;width:100%}
+.btn.ghost{background:var(--soft);color:var(--ink);width:auto;padding:8px 12px;font-weight:500}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg button{flex:1;font:inherit;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .t{font-weight:500}
+.item .s{font-size:13px;color:var(--muted)}
+.item .amt{font-family:'Barlow Semi Condensed',sans-serif;font-weight:600;font-size:18px;text-align:right;white-space:nowrap}
+.x{background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1}
+.empty{color:var(--muted);text-align:center;padding:14px 0}
+.bar{height:8px;border-radius:4px;background:var(--soft);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--out)}
+.hint{font-size:13px;color:var(--muted);margin:6px 0 0}
+.preview{background:var(--soft);border-radius:8px;padding:10px;margin-bottom:10px;font-size:15px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+nav button{flex:1;font:inherit;font-size:14px;font-weight:500;padding:14px 4px;background:none;border:0;color:var(--muted);cursor:pointer;border-top:4px solid transparent}
+nav button.on{color:var(--ink);border-top-color:var(--road);font-weight:600}
+.view{display:none}.view.on{display:block}
+details summary{cursor:pointer;font-weight:600}
+textarea{min-height:110px;font-size:13px}
+.tbl{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Meu Caixa</h1>
+    <select id="mes" class="sel" aria-label="Período"></select>
+  </header>
+
+  <!-- RESUMO -->
+  <section id="v-resumo" class="view on"></section>
+
+  <!-- ENTREGAS -->
+  <section id="v-entregas" class="view">
+    <div class="card">
+      <h3>Nova entrega</h3>
+      <form id="f-ent" autocomplete="off">
+        <div class="row">
+          <div><label for="e-data">Data</label><input id="e-data" type="date" required></div>
+          <div><label for="e-km">Km rodados</label><input id="e-km" inputmode="decimal" placeholder="12,5" required></div>
+        </div>
+        <div class="row">
+          <div><label for="e-frete">Frete recebido (R$)</label><input id="e-frete" inputmode="decimal" placeholder="18,00" required></div>
+          <div><label for="e-obs">Obs. (opcional)</label><input id="e-obs" placeholder="Cliente / bairro"></div>
+        </div>
+        <div id="e-prev" class="preview">Preencha km e frete para ver o lucro.</div>
+        <button class="btn" type="submit">Salvar entrega</button>
+      </form>
+    </div>
+    <div id="l-ent" class="card"></div>
+  </section>
+
+  <!-- DINHEIRO -->
+  <section id="v-dinheiro" class="view">
+    <div class="card">
+      <h3>Novo lançamento</h3>
+      <form id="f-lanc" autocomplete="off">
+        <div class="seg" role="group" aria-label="Tipo">
+          <button type="button" id="t-out" class="on">Gasto</button>
+          <button type="button" id="t-in">Ganho</button>
+        </div>
+        <div class="row">
+          <div><label for="l-data">Data</label><input id="l-data" type="date" required></div>
+          <div><label for="l-valor">Valor (R$)</label><input id="l-valor" inputmode="decimal" placeholder="0,00" required></div>
+        </div>
+        <div class="row">
+          <div><label for="l-desc">Descrição</label><input id="l-desc" placeholder="Ex.: mercado" required></div>
+          <div><label for="l-cat">Categoria</label><select id="l-cat"></select></div>
+        </div>
+        <button class="btn" type="submit">Salvar lançamento</button>
+      </form>
+    </div>
+    <div id="l-lanc" class="card"></div>
+  </section>
+
+  <!-- COMBUSTIVEL -->
+  <section id="v-comb" class="view">
+    <div class="card">
+      <h3>Novo abastecimento</h3>
+      <form id="f-comb" autocomplete="off">
+        <div class="row">
+          <div><label for="c-data">Data</label><input id="c-data" type="date" required></div>
+          <div><label for="c-odo">Odômetro (km)</label><input id="c-odo" inputmode="decimal" placeholder="45230" required></div>
+        </div>
+        <div class="row">
+          <div><label for="c-lit">Litros</label><input id="c-lit" inputmode="decimal" placeholder="8,5" required></div>
+          <div><label for="c-val">Valor pago (R$)</label><input id="c-val" inputmode="decimal" placeholder="52,00" required></div>
+        </div>
+        <button class="btn" type="submit">Salvar abastecimento</button>
+        <p class="hint">Sempre encha o tanque e anote o odômetro. O km/l é calculado entre os abastecimentos.</p>
+      </form>
+    </div>
+    <div class="card">
+      <h3>Ajustes de custo</h3>
+      <div class="row">
+        <div><label for="k-kml">Km por litro (manual)</label><input id="k-kml" inputmode="decimal" placeholder="Automático"></div>
+        <div><label for="k-preco">Preço do litro (R$)</label><input id="k-preco" inputmode="decimal" placeholder="Último abastecimento"></div>
+      </div>
+      <div class="row one">
+        <div><label for="k-extra">Desgaste/manutenção por km (R$, opcional)</label><input id="k-extra" inputmode="decimal" placeholder="0,00"></div>
+      </div>
+      <p class="hint">Deixe em branco para usar o valor calculado dos abastecimentos.</p>
+      <div id="k-info" class="preview" style="margin-top:10px"></div>
+    </div>
+    <div id="l-comb" class="card"></div>
+  </section>
+</div>
+
+<nav>
+  <button data-v="resumo" class="on">Resumo</button>
+  <button data-v="entregas">Entregas</button>
+  <button data-v="dinheiro">Dinheiro</button>
+  <button data-v="comb">Combustível</button>
+</nav>
+
+<script>
+(function(){
+  var KEY='meu-caixa-v1';
+  var CAT_OUT=['Moradia','Alimentação','Transporte','Manutenção do veículo','Contas','Saúde','Lazer','Outros'];
+  var CAT_IN=['Salário','Extra','Outros'];
+  var S={lanc:[],ent:[],comb:[],cfg:{kml:'',preco:'',extra:''}};
+  var mes=''; var tipo='out';
+
+  function load(){ try{ var r=localStorage.getItem(KEY); if(r){ var d=JSON.parse(r); S.lanc=d.lanc||[];S.ent=d.ent||[];S.comb=d.comb||[];S.cfg=Object.assign({kml:'',preco:'',extra:''},d.cfg||{}); } }catch(e){} }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+  function $(id){return document.getElementById(id)}
+  function num(v){ if(typeof v==='number')return v; v=String(v||'').trim().replace(/\./g,function(m,i,s){return s.indexOf(',')>-1?'':'.'}).replace(',','.'); var n=parseFloat(v); return isNaN(n)?0:n; }
+  var brl=new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  var dec=new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2});
+  function R(n){return brl.format(n||0)}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+  function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+  function fdate(s){var p=s.split('-');return p[2]+'/'+p[1]}
+  function inMes(d){return mes==='all'||d.slice(0,7)===mes}
+  function byDateDesc(a,b){return a.data<b.data?1:a.data>b.data?-1:0}
+
+  // ----- consumo
+  function calc(){
+    var c=S.comb.slice().sort(function(a,b){return a.odo-b.odo});
+    var auto=0;
+    if(c.length>=2){
+      var dist=c[c.length-1].odo-c[0].odo, lit=0;
+      for(var i=1;i<c.length;i++) lit+=c[i].lit;
+      if(lit>0&&dist>0) auto=dist/lit;
+    }
+    var man=num(S.cfg.kml);
+    var kml=man>0?man:auto;
+    var last=S.comb.slice().sort(byDateDesc)[0];
+    var pl=num(S.cfg.preco); var plAuto=last&&last.lit>0?last.val/last.lit:0;
+    var preco=pl>0?pl:plAuto;
+    var extra=num(S.cfg.extra);
+    var custoKm=(kml>0?preco/kml:0)+extra;
+    return {kml:kml,auto:auto,manual:man>0,preco:preco,extra:extra,custoKm:custoKm};
+  }
+
+  // ----- meses
+  function buildMeses(){
+    var set={}; set[today().slice(0,7)]=1;
+    S.lanc.concat(S.ent,S.comb).forEach(function(x){set[x.data.slice(0,7)]=1});
+    var ms=Object.keys(set).sort().reverse();
+    var nomes=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    var sel=$('mes'); sel.innerHTML='';
+    ms.forEach(function(m){var o=document.createElement('option');o.value=m;o.textContent=nomes[+m.slice(5)-1]+'/'+m.slice(0,4);sel.appendChild(o)});
+    var all=document.createElement('option');all.value='all';all.textContent='Tudo';sel.appendChild(all);
+    if(!mes||(mes!=='all'&&!set[mes])) mes=ms[0];
+    sel.value=mes;
+  }
+
+  // ----- resumo
+  function rResumo(){
+    var k=calc();
+    var lanc=S.lanc.filter(function(x){return inMes(x.data)});
+    var ent=S.ent.filter(function(x){return inMes(x.data)});
+    var comb=S.comb.filter(function(x){return inMes(x.data)});
+    var inLanc=0,outLanc=0,cats={};
+    lanc.forEach(function(x){ if(x.tipo==='in')inLanc+=x.valor; else {outLanc+=x.valor;cats[x.cat]=(cats[x.cat]||0)+x.valor;} });
+    var frete=0,km=0; ent.forEach(function(x){frete+=x.frete;km+=x.km});
+    var gasComb=0,lit=0; comb.forEach(function(x){gasComb+=x.val;lit+=x.lit});
+    if(gasComb>0) cats['Combustível']=gasComb;
+    var entrou=inLanc+frete, saiu=outLanc+gasComb, saldo=entrou-saiu;
+    var custoEst=km*k.custoKm, lucroEnt=frete-custoEst;
+    var maxCat=0; Object.keys(cats).forEach(function(c){if(cats[c]>maxCat)maxCat=cats[c]});
+    var catHtml=Object.keys(cats).sort(function(a,b){return cats[b]-cats[a]}).map(function(c){
+      return '<div style="margin-bottom:10px"><div class="item" style="border:0;padding:0"><span>'+esc(c)+'</span><span class="amt">'+R(cats[c])+'</span></div><div class="bar"><i style="width:'+(maxCat?cats[c]/maxCat*100:0)+'%"></i></div></div>';
+    }).join('')||'<div class="empty">Nenhum gasto neste período.</div>';
+
+    $('v-resumo').innerHTML=
+      '<div class="card saldo"><div class="lbl">Saldo do período</div><div class="val '+(saldo>=0?'pos':'neg')+'">'+R(saldo)+'</div></div>'+
+      '<div class="grid" style="margin-bottom:12px"><div class="kv"><div class="k">Entrou (ganhos + fretes)</div><div class="v pos">'+R(entrou)+'</div></div><div class="kv"><div class="k">Saiu (gastos + combustível)</div><div class="v neg">'+R(saiu)+'</div></div></div>'+
+      '<h2>Entregas</h2><div class="card"><div class="grid">'+
+        '<div class="kv"><div class="k">Entregas</div><div class="v">'+ent.length+'</div></div>'+
+        '<div class="kv"><div class="k">Frete total</div><div class="v">'+R(frete)+'</div></div>'+
+        '<div class="kv"><div class="k">Km rodados</div><div class="v">'+dec.format(km)+' km</div></div>'+
+        '<div class="kv"><div class="k">Custo de combustível (estimado)</div><div class="v neg">'+R(custoEst)+'</div></div>'+
+        '<div class="kv"><div class="k">Lucro das entregas</div><div class="v '+(lucroEnt>=0?'pos':'neg')+'">'+R(lucroEnt)+'</div></div>'+
+        '<div class="kv"><div class="k">Lucro por km</div><div class="v">'+(km>0?R(lucroEnt/km):'—')+'</div></div>'+
+      '</div>'+(k.custoKm>0?'':'<p class="hint">Cadastre abastecimentos (ou o km/l manual) para calcular o custo.</p>')+'</div>'+
+      '<h2>Consumo</h2><div class="card"><div class="grid">'+
+        '<div class="kv"><div class="k">Km por litro</div><div class="v">'+(k.kml>0?dec.format(k.kml):'—')+'</div></div>'+
+        '<div class="kv"><div class="k">Custo por km</div><div class="v">'+(k.custoKm>0?R(k.custoKm):'—')+'</div></div>'+
+        '<div class="kv"><div class="k">Litros no período</div><div class="v">'+dec.format(lit)+' L</div></div>'+
+        '<div class="kv"><div class="k">Gasto real com combustível</div><div class="v">'+R(gasComb)+'</div></div>'+
+      '</div></div>'+
+      '<h2>Para onde foi o dinheiro</h2><div class="card">'+catHtml+'</div>'+
+      '<details class="card"><summary>Backup dos dados</summary>'+
+        '<p class="hint">Os dados ficam só neste aparelho e navegador. Gere o backup, copie o texto e guarde (ex.: mande pra você no WhatsApp). Para restaurar, cole o texto e toque em Restaurar.</p>'+
+        '<textarea id="bk" aria-label="Texto do backup"></textarea>'+
+        '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn ghost" id="bk-gen" type="button">Gerar backup</button><button class="btn ghost" id="bk-res" type="button">Restaurar</button></div>'+
+        '<p id="bk-msg" class="hint"></p></details>';
+    $('bk-gen').onclick=function(){$('bk').value=JSON.stringify(S);$('bk').select();$('bk-msg').textContent='Backup gerado. Copie o texto acima.'};
+    $('bk-res').onclick=function(){
+      try{var d=JSON.parse($('bk').value); if(!d||typeof d!=='object')throw 0;
+        S.lanc=d.lanc||[];S.ent=d.ent||[];S.comb=d.comb||[];S.cfg=Object.assign({kml:'',preco:'',extra:''},d.cfg||{});
+        save();renderAll();
+      }catch(e){$('bk-msg').textContent='Texto inválido. Cole o backup completo.'}
+    };
+  }
+
+  // ----- listas
+  function rEnt(){
+    var k=calc();
+    var list=S.ent.filter(function(x){return inMes(x.data)}).sort(byDateDesc);
+    $('l-ent').innerHTML='<h3>Entregas do período</h3>'+(list.length?list.map(function(x){
+      var custo=x.km*k.custoKm, luc=x.frete-custo;
+      return '<div class="item"><div><div class="t">'+fdate(x.data)+' · '+dec.format(x.km)+' km'+(x.obs?' · '+esc(x.obs):'')+'</div><div class="s">Frete '+R(x.frete)+' · combustível '+R(custo)+'</div></div><div style="display:flex;align-items:center"><div class="amt '+(luc>=0?'pos':'neg')+'">'+R(luc)+'</div><button class="x" data-del="ent" data-id="'+x.id+'" aria-label="Apagar">×</button></div></div>';
+    }).join(''):'<div class="empty">Nenhuma entrega neste período. Registre a primeira acima.</div>');
+  }
+  function rLanc(){
+    var list=S.lanc.filter(function(x){return inMes(x.data)}).sort(byDateDesc);
+    $('l-lanc').innerHTML='<h3>Lançamentos do período</h3>'+(list.length?list.map(function(x){
+      return '<div class="item"><div><div class="t">'+esc(x.desc)+'</div><div class="s">'+fdate(x.data)+' · '+esc(x.cat)+'</div></div><div style="display:flex;align-items:center"><div class="amt '+(x.tipo==='in'?'pos':'neg')+'">'+(x.tipo==='in'?'+':'−')+R(x.valor)+'</div><button class="x" data-del="lanc" data-id="'+x.id+'" aria-label="Apagar">×</button></div></div>';
+    }).join(''):'<div class="empty">Nenhum lançamento neste período.</div>');
+  }
+  function rComb(){
+    var k=calc();
+    $('k-kml').value=S.cfg.kml; $('k-preco').value=S.cfg.preco; $('k-extra').value=S.cfg.extra;
+    $('k-info').innerHTML='Km/l em uso: <b>'+(k.kml>0?dec.format(k.kml):'—')+'</b> '+(k.kml>0?(k.manual?'(manual)':'(calculado)'):'(precisa de 2 abastecimentos)')+'<br>Preço do litro: <b>'+(k.preco>0?R(k.preco):'—')+'</b><br>Custo por km: <b>'+(k.custoKm>0?R(k.custoKm):'—')+'</b>';
+    var list=S.comb.filter(function(x){return inMes(x.data)}).sort(byDateDesc);
+    $('l-comb').innerHTML='<h3>Abastecimentos do período</h3>'+(list.length?list.map(function(x){
+      return '<div class="item"><div><div class="t">'+fdate(x.data)+' · '+dec.format(x.lit)+' L · '+dec.format(x.odo)+' km</div><div class="s">'+R(x.lit>0?x.val/x.lit:0)+' por litro</div></div><div style="display:flex;align-items:center"><div class="amt">'+R(x.val)+'</div><button class="x" data-del="comb" data-id="'+x.id+'" aria-label="Apagar">×</button></div></div>';
+    }).join(''):'<div class="empty">Nenhum abastecimento neste período.</div>');
+  }
+  function renderAll(){buildMeses();rResumo();rEnt();rLanc();rComb()}
+
+  // ----- eventos
+  function fillCats(){
+    var arr=tipo==='in'?CAT_IN:CAT_OUT;
+    $('l-cat').innerHTML=arr.map(function(c){return '<option>'+c+'</option>'}).join('');
+    $('t-out').classList.toggle('on',tipo==='out');$('t-in').classList.toggle('on',tipo==='in');
+  }
+  function prev(){
+    var km=num($('e-km').value),fr=num($('e-frete').value),k=calc();
+    if(!km||!fr){$('e-prev').textContent='Preencha km e frete para ver o lucro.';return}
+    if(k.custoKm<=0){$('e-prev').textContent='Cadastre abastecimentos na aba Combustível para calcular o custo.';return}
+    var c=km*k.custoKm,l=fr-c;
+    $('e-prev').innerHTML='Combustível: <b>'+R(c)+'</b> · Lucro: <b class="'+(l>=0?'pos':'neg')+'">'+R(l)+'</b> · '+R(l/km)+' por km';
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    load();
+    ['e-data','l-data','c-data'].forEach(function(id){$(id).value=today()});
+    fillCats();
+    $('t-out').onclick=function(){tipo='out';fillCats()};
+    $('t-in').onclick=function(){tipo='in';fillCats()};
+    $('mes').onchange=function(){mes=this.value;rResumo();rEnt();rLanc();rComb()};
+    $('e-km').oninput=prev;$('e-frete').oninput=prev;
+    document.querySelectorAll('nav button').forEach(function(b){
+      b.onclick=function(){
+        document.querySelectorAll('nav button').forEach(function(x){x.classList.toggle('on',x===b)});
+        document.querySelectorAll('.view').forEach(function(v){v.classList.toggle('on',v.id==='v-'+b.dataset.v)});
+        window.scrollTo(0,0);
+      };
+    });
+    $('f-ent').onsubmit=function(e){e.preventDefault();
+      var km=num($('e-km').value),fr=num($('e-frete').value); if(km<=0||fr<=0)return;
+      S.ent.push({id:uid(),data:$('e-data').value,km:km,frete:fr,obs:$('e-obs').value.trim()});
+      save();$('e-km').value='';$('e-frete').value='';$('e-obs').value='';prev();renderAll();
+    };
+    $('f-lanc').onsubmit=function(e){e.preventDefault();
+      var v=num($('l-valor').value); if(v<=0)return;
+      S.lanc.push({id:uid(),tipo:tipo,data:$('l-data').value,valor:v,desc:$('l-desc').value.trim(),cat:$('l-cat').value});
+      save();$('l-valor').value='';$('l-desc').value='';renderAll();
+    };
+    $('f-comb').onsubmit=function(e){e.preventDefault();
+      var odo=num($('c-odo').value),lit=num($('c-lit').value),val=num($('c-val').value); if(odo<=0||lit<=0||val<=0)return;
+      S.comb.push({id:uid(),data:$('c-data').value,odo:odo,lit:lit,val:val});
+      save();$('c-lit').value='';$('c-val').value='';$('c-odo').value='';renderAll();
+    };
+    ['k-kml','k-preco','k-extra'].forEach(function(id){
+      $(id).onchange=function(){S.cfg.kml=$('k-kml').value.trim();S.cfg.preco=$('k-preco').value.trim();S.cfg.extra=$('k-extra').value.trim();save();renderAll()};
+    });
+    document.body.addEventListener('click',function(e){
+      var b=e.target.closest('[data-del]'); if(!b)return;
+      if(!confirm('Apagar este registro?'))return;
+      var t=b.dataset.del; S[t]=S[t].filter(function(x){return x.id!==b.dataset.id});
+      save();renderAll();
+    });
+    renderAll();prev();
+  });
+})();
+</script>
+</body>
+</html>
